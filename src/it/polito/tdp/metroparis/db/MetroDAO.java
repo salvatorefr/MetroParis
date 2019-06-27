@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.javadocmd.simplelatlng.LatLng;
 
@@ -14,7 +15,7 @@ import it.polito.tdp.metroparis.model.Linea;
 
 public class MetroDAO {
 
-	public List<Fermata> getAllFermate() {
+	public List<Fermata> getAllFermate(Map<Integer,Fermata> tutteLeFermate) {
 
 		final String sql = "SELECT id_fermata, nome, coordx, coordy FROM fermata ORDER BY nome ASC";
 		List<Fermata> fermate = new ArrayList<Fermata>();
@@ -25,9 +26,12 @@ public class MetroDAO {
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
+				if (tutteLeFermate.get(rs.getInt("id_Fermata"))==null) {
 				Fermata f = new Fermata(rs.getInt("id_Fermata"), rs.getString("nome"),
 						new LatLng(rs.getDouble("coordx"), rs.getDouble("coordy")));
 				fermate.add(f);
+				tutteLeFermate.put(rs.getInt("id_Fermata"),f);
+				}
 			}
 
 			st.close();
@@ -66,6 +70,25 @@ public class MetroDAO {
 		}
 
 		return linee;
+	}
+
+	public List<Integer> getDestinazioni(Fermata partenza) {
+	List <Integer> arrivi= new ArrayList<Integer>();
+	final String sql="SELECT c.id_stazA from connessione AS c WHERE c.id_stazP=?";
+	try {
+		Connection conn= DBConnect.getConnection();
+		PreparedStatement st= conn.prepareStatement(sql);
+		st.setInt(1,partenza.getIdFermata());
+		ResultSet rs= st.executeQuery();
+		while (rs.next()) {
+			arrivi.add(rs.getInt(1));
+		}
+		conn.close();
+		return arrivi;
+	} catch (SQLException e) {
+		return null;
+	}
+	
 	}
 
 
